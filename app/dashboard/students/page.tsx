@@ -141,13 +141,13 @@ export default function StudentsPage() {
                                     />
                                 </div>
                             </div>
-                            <select className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <select className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900">
                                 <option value="">All Courses</option>
                                 <option value="ADCA">ADCA</option>
                                 <option value="CCC">CCC</option>
                                 <option value="Tally">Tally</option>
                             </select>
-                            <select className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <select className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900">
                                 <option value="">All Status</option>
                                 <option value="Active">Active</option>
                                 <option value="Completed">Completed</option>

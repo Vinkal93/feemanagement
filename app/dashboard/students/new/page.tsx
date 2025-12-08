@@ -68,17 +68,47 @@ export default function NewAdmissionPage() {
 
         try {
             console.log('Form submitted:', formData)
-            // TODO: Replace with actual API call
-            // const response = await fetch('/api/admissions', {
-            //     method: 'POST',
-            //     headers: { 'Content-Type': 'application/json' },
-            //     body: JSON.stringify(formData)
-            // })
 
-            alert('Admission successful! Student has been registered.')
+            const response = await fetch('/api/admissions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    // Student data
+                    name: formData.name,
+                    fatherName: formData.fatherName,
+                    mobile: formData.mobile,
+                    alternateMobile: formData.alternateMobile,
+                    email: formData.email,
+                    address: formData.address,
+                    city: formData.city,
+                    state: formData.state,
+                    pincode: formData.pincode,
+                    dob: formData.dob,
+                    gender: formData.gender,
+                    aadharNumber: formData.aadharNumber,
+                    photo: formData.photo,
 
-            // Redirect to students page
-            router.push('/dashboard/students')
+                    // Admission data
+                    courseId: formData.course,
+                    batchId: formData.batch,
+                    feeStructureId: formData.feeStructure,
+                    admissionDate: formData.admissionDate,
+
+                    // Payment data
+                    registrationFeePaid: formData.firstPayment > 0,
+                    paymentMode: formData.paymentMode,
+                    collectedById: 'default-user-id' // TODO: Get from session
+                })
+            })
+
+            if (response.ok) {
+                const data = await response.json()
+                alert(`Admission successful! Admission Number: ${data.admissionNumber}`)
+                router.push('/dashboard/students')
+            } else {
+                const error = await response.json()
+                throw new Error(error.error || 'Failed to submit admission')
+            }
         } catch (error) {
             console.error('Error submitting admission:', error)
             alert('Failed to submit admission. Please try again.')

@@ -1,11 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
+import RecordPaymentModal from '@/components/modals/RecordPaymentModal'
 import {
     Search,
     User,
@@ -18,12 +19,18 @@ import {
     CheckCircle,
     AlertCircle,
     Filter,
-    X as CloseIcon
+    X as CloseIcon,
+    Plus
 } from 'lucide-react'
 import { formatCurrency, formatDate } from '@/lib/utils'
 
 export default function FeeCollectionPage() {
     const [selectedStudent, setSelectedStudent] = useState<any>(null)
+    const [showRecordPaymentModal, setShowRecordPaymentModal] = useState(false)
+    const [searchTerm, setSearchTerm] = useState('')
+    const [students, setStudents] = useState<any[]>([])
+    const [payments, setPayments] = useState<any[]>([])
+    const [loading, setLoading] = useState(false)
     const [paymentAmount, setPaymentAmount] = useState('')
     const [paymentMode, setPaymentMode] = useState('Cash')
     const [transactionId, setTransactionId] = useState('')
@@ -208,6 +215,16 @@ export default function FeeCollectionPage() {
                                     </div>
                                 </CardContent>
                             </Card>
+
+                            {/* Record Payment Button */}
+                            <Button
+                                variant="success"
+                                className="w-full mt-4"
+                                onClick={() => setShowRecordPaymentModal(true)}
+                            >
+                                <Plus className="w-4 h-4 mr-2" />
+                                Record Payment
+                            </Button>
 
                             {/* Installment Schedule */}
                             <Card className="mt-6">
@@ -604,6 +621,20 @@ export default function FeeCollectionPage() {
                     </div>
                 )}
             </div>
+
+            {/* Record Payment Modal */}
+            {selectedStudent && (
+                <RecordPaymentModal
+                    isOpen={showRecordPaymentModal}
+                    onClose={() => setShowRecordPaymentModal(false)}
+                    student={selectedStudent}
+                    onSuccess={() => {
+                        // Refresh data after successful payment
+                        alert('Payment recorded successfully!')
+                        setShowRecordPaymentModal(false)
+                    }}
+                />
+            )}
         </DashboardLayout>
     )
 }

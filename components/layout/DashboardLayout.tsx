@@ -22,6 +22,8 @@ import { useState } from 'react'
 const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Students', href: '/dashboard/students', icon: Users },
+    { name: 'Courses', href: '/dashboard/courses', icon: GraduationCap },
+    { name: 'Batches', href: '/dashboard/batches', icon: GraduationCap },
     { name: 'Admissions', href: '/dashboard/admissions', icon: GraduationCap },
     { name: 'Fee Collection', href: '/dashboard/fee-collection', icon: DollarSign },
     { name: 'Dues', href: '/dashboard/dues', icon: AlertCircle },
