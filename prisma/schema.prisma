@@ -1,0 +1,373 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Institute Settings
+model Institute {
+  id              String   @id @default(cuid())
+  name            String
+  logo            String?
+  address         String
+  city            String
+  state           String
+  pincode         String
+  phone           String
+  email           String
+  website         String?
+  
+  // Bank Details
+  bankName        String?
+  accountNumber   String?
+  ifscCode        String?
+  upiId           String?
+  
+  // Receipt Settings
+  receiptPrefix   String   @default("RCP")
+  receiptHeader   String?
+  receiptFooter   String?
+  
+  // GST Settings
+  gstNumber       String?
+  gstPercentage   Float    @default(0)
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+// User Roles
+enum UserRole {
+  ADMIN
+  CASHIER
+  FACULTY
+  COUNSELOR
+  STUDENT
+}
+
+// Users
+model User {
+  id              String      @id @default(cuid())
+  name            String
+  email           String      @unique
+  phone           String      @unique
+  password        String
+  role            UserRole    @default(CASHIER)
+  isActive        Boolean     @default(true)
+  
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  
+  // Relations
+  payments        Payment[]
+  auditLogs       AuditLog[]
+  
+  @@index([email])
+  @@index([phone])
+}
+
+// Fee Type
+enum FeeType {
+  LUMP_SUM
+  INSTALLMENT
+}
+
+// Course
+model Course {
+  id              String          @id @default(cuid())
+  name            String
+  code            String          @unique
+  description     String?
+  duration        Int             // in months
+  isActive        Boolean         @default(true)
+  
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  
+  // Relations
+  feeStructures   FeeStructure[]
+  batches         Batch[]
+  admissions      Admission[]
+  
+  @@index([code])
+}
+
+// Fee Structure
+model FeeStructure {
+  id                  String      @id @default(cuid())
+  courseId            String
+  name                String      // e.g., "ADCA - 6 Month Plan"
+  totalFee            Float
+  feeType             FeeType
+  
+  // Installment Settings
+  installmentCount    Int?        // Number of installments
+  installmentAmount   Float?      // Amount per installment
+  installmentFrequency String?    // MONTHLY, QUARTERLY, CUSTOM
+  
+  // Additional Fees
+  registrationFee     Float       @default(0)
+  examFee             Float       @default(0)
+  
+  // Late Fee Settings
+  lateFeeRuleId       String?
+  
+  isActive            Boolean     @default(true)
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
+  
+  // Relations
+  course              Course      @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lateFeeRule         LateFeeRule? @relation(fields: [lateFeeRuleId], references: [id])
+  admissions          Admission[]
+  
+  @@index([courseId])
+}
+
+// Late Fee Rules
+model LateFeeRule {
+  id              String          @id @default(cuid())
+  name            String
+  type            String          // PER_DAY, PER_WEEK, FIXED
+  amount          Float
+  description     String?
+  
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  
+  // Relations
+  feeStructures   FeeStructure[]
+}
+
+// Batch
+model Batch {
+  id              String      @id @default(cuid())
+  courseId        String
+  name            String      // e.g., "ADCA Morning Batch"
+  timing          String      // e.g., "9:00 AM - 11:00 AM"
+  facultyName     String?
+  maxStudents     Int         @default(30)
+  startDate       DateTime
+  endDate         DateTime?
+  isActive        Boolean     @default(true)
+  
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  
+  // Relations
+  course          Course      @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  admissions      Admission[]
+  
+  @@index([courseId])
+}
+
+// Student
+model Student {
+  id              String      @id @default(cuid())
+  
+  // Personal Details
+  name            String
+  fatherName      String
+  mobile          String      @unique
+  alternateMobile String?
+  email           String?
+  
+  // Address
+  address         String
+  city            String
+  state           String      @default("India")
+  pincode         String
+  
+  // Other Details
+  dob             DateTime?
+  gender          String?     // MALE, FEMALE, OTHER
+  aadharNumber    String?
+  photo           String?     // URL to photo
+  
+  isActive        Boolean     @default(true)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  
+  // Relations
+  admissions      Admission[]
+  
+  @@index([mobile])
+  @@index([name])
+}
+
+// Admission Status
+enum AdmissionStatus {
+  ACTIVE
+  COMPLETED
+  DROPPED
+  SUSPENDED
+}
+
+// Admission
+model Admission {
+  id              String          @id @default(cuid())
+  studentId       String
+  courseId        String
+  batchId         String
+  feeStructureId  String
+  
+  admissionDate   DateTime        @default(now())
+  admissionNumber String          @unique
+  
+  // Fee Details
+  totalFee        Float
+  registrationFee Float           @default(0)
+  examFee         Float           @default(0)
+  
+  status          AdmissionStatus @default(ACTIVE)
+  
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  
+  // Relations
+  student         Student         @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  course          Course          @relation(fields: [courseId], references: [id])
+  batch           Batch           @relation(fields: [batchId], references: [id])
+  feeStructure    FeeStructure    @relation(fields: [feeStructureId], references: [id])
+  
+  installments    Installment[]
+  payments        Payment[]
+  
+  @@index([studentId])
+  @@index([courseId])
+  @@index([batchId])
+  @@index([admissionNumber])
+}
+
+// Installment Status
+enum InstallmentStatus {
+  NOT_PAID
+  PARTIALLY_PAID
+  FULLY_PAID
+  OVERDUE
+}
+
+// Installment
+model Installment {
+  id              String              @id @default(cuid())
+  admissionId     String
+  
+  installmentNumber Int               // 1, 2, 3, etc.
+  amount          Float
+  dueDate         DateTime
+  paidAmount      Float               @default(0)
+  status          InstallmentStatus   @default(NOT_PAID)
+  
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  
+  // Relations
+  admission       Admission           @relation(fields: [admissionId], references: [id], onDelete: Cascade)
+  payments        Payment[]
+  
+  @@index([admissionId])
+  @@index([dueDate])
+  @@index([status])
+}
+
+// Payment Mode
+enum PaymentMode {
+  CASH
+  UPI
+  CARD
+  BANK_TRANSFER
+  WALLET
+  CHEQUE
+}
+
+// Payment
+model Payment {
+  id              String      @id @default(cuid())
+  admissionId     String
+  installmentId   String?
+  
+  amount          Float
+  lateFee         Float       @default(0)
+  totalAmount     Float       // amount + lateFee
+  
+  paymentMode     PaymentMode
+  transactionId   String?     // For digital payments
+  paymentDate     DateTime    @default(now())
+  
+  remarks         String?
+  
+  // Collected by
+  collectedById   String
+  
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  
+  // Relations
+  admission       Admission   @relation(fields: [admissionId], references: [id], onDelete: Cascade)
+  installment     Installment? @relation(fields: [installmentId], references: [id])
+  collectedBy     User        @relation(fields: [collectedById], references: [id])
+  receipt         Receipt?
+  
+  @@index([admissionId])
+  @@index([paymentDate])
+  @@index([collectedById])
+}
+
+// Receipt
+model Receipt {
+  id              String      @id @default(cuid())
+  paymentId       String      @unique
+  
+  receiptNumber   String      @unique
+  pdfUrl          String?
+  
+  createdAt       DateTime    @default(now())
+  
+  // Relations
+  payment         Payment     @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  
+  @@index([receiptNumber])
+}
+
+// Audit Log
+model AuditLog {
+  id              String      @id @default(cuid())
+  userId          String
+  
+  action          String      // CREATE, UPDATE, DELETE
+  entity          String      // STUDENT, PAYMENT, COURSE, etc.
+  entityId        String
+  
+  oldValue        String?     @db.Text
+  newValue        String?     @db.Text
+  
+  ipAddress       String?
+  userAgent       String?
+  
+  createdAt       DateTime    @default(now())
+  
+  // Relations
+  user            User        @relation(fields: [userId], references: [id])
+  
+  @@index([userId])
+  @@index([entity])
+  @@index([createdAt])
+}
+
+// Backup History
+model Backup {
+  id              String      @id @default(cuid())
+  fileName        String
+  filePath        String
+  fileSize        Int         // in bytes
+  
+  createdAt       DateTime    @default(now())
+  
+  @@index([createdAt])
+}
