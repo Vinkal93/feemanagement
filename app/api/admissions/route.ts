@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { InstallmentStatus } from '@prisma/client'
 
 // POST create new admission
 export async function POST(request: NextRequest) {
@@ -97,7 +98,7 @@ export async function POST(request: NextRequest) {
                     amount: installmentAmount,
                     dueDate,
                     paidAmount: 0,
-                    status: 'NOT_PAID'
+                    status: InstallmentStatus.NOT_PAID
                 })
             }
 

@@ -1,12 +1,14 @@
-import { PrismaClient } from '@prisma/client'
-import 'dotenv/config'
-import bcrypt from 'bcryptjs'
-
-const prisma = new PrismaClient()
-
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const client_1 = require("@prisma/client");
+require("dotenv/config");
+const bcryptjs_1 = __importDefault(require("bcryptjs"));
+const prisma = new client_1.PrismaClient();
 async function main() {
-    console.log('🌱 Starting database seed...')
-
+    console.log('🌱 Starting database seed...');
     // Create Institute
     const institute = await prisma.institute.upsert({
         where: { id: 'default-institute' },
@@ -22,12 +24,10 @@ async function main() {
             email: 'info@sbci.com',
             gstNumber: 'GST123456'
         }
-    })
-    console.log('✅ Institute created')
-
+    });
+    console.log('✅ Institute created');
     // Hash password for admin user
-    const hashedPassword = await bcrypt.hash('admin123', 10)
-
+    const hashedPassword = await bcryptjs_1.default.hash('admin123', 10);
     // Create Default User
     const user = await prisma.user.upsert({
         where: { id: 'default-user-id' },
@@ -41,9 +41,8 @@ async function main() {
             password: hashedPassword,
             isActive: true
         }
-    })
-    console.log('✅ User created')
-
+    });
+    console.log('✅ User created');
     // Create Courses
     const courses = await Promise.all([
         prisma.course.create({
@@ -82,9 +81,8 @@ async function main() {
                 isActive: true
             }
         })
-    ])
-    console.log('✅ Courses created:', courses.length)
-
+    ]);
+    console.log('✅ Courses created:', courses.length);
     // Create Late Fee Rule
     const lateFeeRule = await prisma.lateFeeRule.create({
         data: {
@@ -93,9 +91,8 @@ async function main() {
             amount: 50,
             description: 'Standard late fee of ₹50 per day'
         }
-    })
-    console.log('✅ Late Fee Rule created')
-
+    });
+    console.log('✅ Late Fee Rule created');
     // Create Fee Structures
     const feeStructures = await Promise.all([
         // ADCA - Installment
@@ -156,9 +153,8 @@ async function main() {
                 isActive: true
             }
         })
-    ])
-    console.log('✅ Fee Structures created:', feeStructures.length)
-
+    ]);
+    console.log('✅ Fee Structures created:', feeStructures.length);
     // Create Batches
     const batches = await Promise.all([
         prisma.batch.create({
@@ -194,9 +190,8 @@ async function main() {
                 isActive: true
             }
         })
-    ])
-    console.log('✅ Batches created:', batches.length)
-
+    ]);
+    console.log('✅ Batches created:', batches.length);
     // Create Sample Students
     const students = await Promise.all([
         prisma.student.create({
@@ -244,9 +239,8 @@ async function main() {
                 isActive: true
             }
         })
-    ])
-    console.log('✅ Students created:', students.length)
-
+    ]);
+    console.log('✅ Students created:', students.length);
     // Create Admissions
     const admissions = await Promise.all([
         prisma.admission.create({
@@ -291,70 +285,57 @@ async function main() {
                 status: 'ACTIVE'
             }
         })
-    ])
-    console.log('✅ Admissions created:', admissions.length)
-
+    ]);
+    console.log('✅ Admissions created:', admissions.length);
     // Create Installments for ADCA students
-    const installments = []
+    const installments = [];
     for (let i = 0; i < 6; i++) {
-        const dueDate = new Date('2025-02-01')
-        dueDate.setMonth(dueDate.getMonth() + i)
-
-        installments.push(
-            prisma.installment.create({
-                data: {
-                    admissionId: admissions[0].id,
-                    installmentNumber: i + 1,
-                    amount: 2000,
-                    dueDate,
-                    paidAmount: i === 0 ? 2000 : 0,
-                    status: i === 0 ? 'FULLY_PAID' : 'NOT_PAID'
-                }
-            })
-        )
-
-        installments.push(
-            prisma.installment.create({
-                data: {
-                    admissionId: admissions[2].id,
-                    installmentNumber: i + 1,
-                    amount: 2000,
-                    dueDate,
-                    paidAmount: 0,
-                    status: 'NOT_PAID'
-                }
-            })
-        )
+        const dueDate = new Date('2025-02-01');
+        dueDate.setMonth(dueDate.getMonth() + i);
+        installments.push(prisma.installment.create({
+            data: {
+                admissionId: admissions[0].id,
+                installmentNumber: i + 1,
+                amount: 2000,
+                dueDate,
+                paidAmount: i === 0 ? 2000 : 0,
+                status: i === 0 ? 'FULLY_PAID' : 'NOT_PAID'
+            }
+        }));
+        installments.push(prisma.installment.create({
+            data: {
+                admissionId: admissions[2].id,
+                installmentNumber: i + 1,
+                amount: 2000,
+                dueDate,
+                paidAmount: 0,
+                status: 'NOT_PAID'
+            }
+        }));
     }
-
     // Create Installments for DCA student
     for (let i = 0; i < 3; i++) {
-        const dueDate = new Date('2025-02-15')
-        dueDate.setMonth(dueDate.getMonth() + i)
-
-        installments.push(
-            prisma.installment.create({
-                data: {
-                    admissionId: admissions[1].id,
-                    installmentNumber: i + 1,
-                    amount: 2000,
-                    dueDate,
-                    paidAmount: i === 0 ? 2000 : 0,
-                    status: i === 0 ? 'FULLY_PAID' : 'NOT_PAID'
-                }
-            })
-        )
+        const dueDate = new Date('2025-02-15');
+        dueDate.setMonth(dueDate.getMonth() + i);
+        installments.push(prisma.installment.create({
+            data: {
+                admissionId: admissions[1].id,
+                installmentNumber: i + 1,
+                amount: 2000,
+                dueDate,
+                paidAmount: i === 0 ? 2000 : 0,
+                status: i === 0 ? 'FULLY_PAID' : 'NOT_PAID'
+            }
+        }));
     }
-
-    await Promise.all(installments)
-    console.log('✅ Installments created:', installments.length)
-
+    await Promise.all(installments);
+    console.log('✅ Installments created:', installments.length);
     // Create Sample Payments
     const payments = await Promise.all([
         prisma.payment.create({
             data: {
                 admissionId: admissions[0].id,
-                installmentId: (await prisma.installment.findFirst({ where: { admissionId: admissions[0].id, installmentNumber: 1 } }))!.id,
+                installmentId: (await prisma.installment.findFirst({ where: { admissionId: admissions[0].id, installmentNumber: 1 } })).id,
                 amount: 2000,
                 lateFee: 0,
                 totalAmount: 2000,
@@ -367,7 +348,7 @@ async function main() {
         prisma.payment.create({
             data: {
                 admissionId: admissions[1].id,
-                installmentId: (await prisma.installment.findFirst({ where: { admissionId: admissions[1].id, installmentNumber: 1 } }))!.id,
+                installmentId: (await prisma.installment.findFirst({ where: { admissionId: admissions[1].id, installmentNumber: 1 } })).id,
                 amount: 2000,
                 lateFee: 0,
                 totalAmount: 2000,
@@ -378,9 +359,8 @@ async function main() {
                 collectedById: user.id
             }
         })
-    ])
-    console.log('✅ Payments created:', payments.length)
-
+    ]);
+    console.log('✅ Payments created:', payments.length);
     // Create Receipts
     const receipts = await Promise.all([
         prisma.receipt.create({
@@ -395,24 +375,22 @@ async function main() {
                 receiptNumber: 'RCP-20250115-0002'
             }
         })
-    ])
-    console.log('✅ Receipts created:', receipts.length)
-
-    console.log('\n🎉 Database seeded successfully!')
-    console.log('\n📊 Summary:')
-    console.log(`- Courses: ${courses.length}`)
-    console.log(`- Batches: ${batches.length}`)
-    console.log(`- Students: ${students.length}`)
-    console.log(`- Admissions: ${admissions.length}`)
-    console.log(`- Installments: ${installments.length}`)
-    console.log(`- Payments: ${payments.length}`)
+    ]);
+    console.log('✅ Receipts created:', receipts.length);
+    console.log('\n🎉 Database seeded successfully!');
+    console.log('\n📊 Summary:');
+    console.log(`- Courses: ${courses.length}`);
+    console.log(`- Batches: ${batches.length}`);
+    console.log(`- Students: ${students.length}`);
+    console.log(`- Admissions: ${admissions.length}`);
+    console.log(`- Installments: ${installments.length}`);
+    console.log(`- Payments: ${payments.length}`);
 }
-
 main()
     .catch((e) => {
-        console.error('❌ Error seeding database:', e)
-        process.exit(1)
-    })
+    console.error('❌ Error seeding database:', e);
+    process.exit(1);
+})
     .finally(async () => {
-        await prisma.$disconnect()
-    })
+    await prisma.$disconnect();
+});

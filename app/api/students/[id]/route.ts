@@ -4,11 +4,12 @@ import { prisma } from '@/lib/prisma'
 // GET single student
 export async function GET(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const { id } = await params
         const student = await prisma.student.findUnique({
-            where: { id: params.id },
+            where: { id },
             include: {
                 admissions: {
                     include: {
@@ -71,13 +72,14 @@ export async function GET(
 // PUT update student
 export async function PUT(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const { id } = await params
         const body = await request.json()
 
         const student = await prisma.student.update({
-            where: { id: params.id },
+            where: { id },
             data: {
                 name: body.name,
                 fatherName: body.fatherName,
@@ -109,11 +111,12 @@ export async function PUT(
 // DELETE student
 export async function DELETE(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const { id } = await params
         await prisma.student.delete({
-            where: { id: params.id }
+            where: { id }
         })
 
         return NextResponse.json({ message: 'Student deleted successfully' })

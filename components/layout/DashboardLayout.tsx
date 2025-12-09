@@ -18,6 +18,7 @@ import {
     ChevronRight
 } from 'lucide-react'
 import { useState } from 'react'
+import { useSession, signOut } from 'next-auth/react'
 
 const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -30,6 +31,50 @@ const navigation = [
     { name: 'Reports', href: '/dashboard/reports', icon: FileText },
     { name: 'Settings', href: '/dashboard/settings', icon: Settings },
 ]
+
+function UserSection({ sidebarCollapsed }: { sidebarCollapsed: boolean }) {
+    const { data: session } = useSession()
+
+    const handleLogout = async () => {
+        if (confirm('Are you sure you want to logout?')) {
+            await signOut({ redirect: true, callbackUrl: '/login' })
+        }
+    }
+
+    if (!session?.user) return null
+
+    const initials = session.user.name?.charAt(0).toUpperCase() || 'U'
+
+    return (
+        <div className="border-t border-gray-200">
+            <div className={cn(
+                "flex items-center space-x-3 px-3 py-2 m-4",
+                sidebarCollapsed && "justify-center"
+            )}>
+                <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <span className="text-sm font-medium text-indigo-600">{initials}</span>
+                </div>
+                {!sidebarCollapsed && (
+                    <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-900 truncate">{session.user.name}</p>
+                        <p className="text-xs text-gray-500 truncate">{session.user.role}</p>
+                    </div>
+                )}
+            </div>
+            <button
+                className={cn(
+                    "flex items-center space-x-3 px-3 py-2 mx-4 mb-4 w-auto rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors",
+                    sidebarCollapsed ? "justify-center w-10" : "w-full"
+                )}
+                title={sidebarCollapsed ? "Logout" : ""}
+                onClick={handleLogout}
+            >
+                <LogOut className="w-5 h-5 flex-shrink-0" />
+                {!sidebarCollapsed && <span>Logout</span>}
+            </button>
+        </div>
+    )
+}
 
 export default function DashboardLayout({
     children,
@@ -103,53 +148,21 @@ export default function DashboardLayout({
                     </nav>
 
                     {/* User section */}
-                    <div className="border-t border-gray-200">
-                        <div className={cn(
-                            "flex items-center space-x-3 px-3 py-2 m-4",
-                            sidebarCollapsed && "justify-center"
-                        )}>
-                            <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center flex-shrink-0">
-                                <span className="text-sm font-medium text-indigo-600">A</span>
-                            </div>
-                            {!sidebarCollapsed && (
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-medium text-gray-900 truncate">Admin</p>
-                                    <p className="text-xs text-gray-500 truncate">admin@sbci.com</p>
-                                </div>
-                            )}
-                        </div>
-                        <button
-                            className={cn(
-                                "flex items-center space-x-3 px-3 py-2 mx-4 mb-4 w-auto rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors",
-                                sidebarCollapsed ? "justify-center w-10" : "w-full"
-                            )}
-                            title={sidebarCollapsed ? "Logout" : ""}
-                            onClick={() => {
-                                if (confirm('Are you sure you want to logout?')) {
-                                    // TODO: Clear session/auth token
-                                    alert('Logging out...')
-                                    window.location.href = '/'
-                                }
-                            }}
-                        >
-                            <LogOut className="w-5 h-5 flex-shrink-0" />
-                            {!sidebarCollapsed && <span>Logout</span>}
-                        </button>
+                    <UserSection sidebarCollapsed={sidebarCollapsed} />
 
-                        {/* Collapse Toggle Button */}
-                        <div className="flex justify-center pb-4 hidden lg:flex">
-                            <button
-                                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-                                className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-900 transition-colors"
-                                title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-                            >
-                                {sidebarCollapsed ? (
-                                    <ChevronRight className="w-5 h-5" />
-                                ) : (
-                                    <ChevronLeft className="w-5 h-5" />
-                                )}
-                            </button>
-                        </div>
+                    {/* Collapse Toggle Button */}
+                    <div className="flex justify-center pb-4 hidden lg:flex">
+                        <button
+                            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+                            className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-900 transition-colors"
+                            title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+                        >
+                            {sidebarCollapsed ? (
+                                <ChevronRight className="w-5 h-5" />
+                            ) : (
+                                <ChevronLeft className="w-5 h-5" />
+                            )}
+                        </button>
                     </div>
                 </div>
             </aside>

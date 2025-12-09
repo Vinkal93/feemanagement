@@ -4,11 +4,12 @@ import { prisma } from '@/lib/prisma'
 // GET single batch with details
 export async function GET(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const { id } = await params
         const batch = await prisma.batch.findUnique({
-            where: { id: params.id },
+            where: { id },
             include: {
                 course: true,
                 admissions: {
@@ -59,13 +60,14 @@ export async function GET(
 // PUT update batch
 export async function PUT(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const { id } = await params
         const body = await request.json()
 
         const batch = await prisma.batch.update({
-            where: { id: params.id },
+            where: { id },
             data: {
                 name: body.name,
                 timing: body.timing,
@@ -93,11 +95,12 @@ export async function PUT(
 // DELETE batch
 export async function DELETE(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const { id } = await params
         await prisma.batch.delete({
-            where: { id: params.id }
+            where: { id }
         })
 
         return NextResponse.json({ message: 'Batch deleted successfully' })

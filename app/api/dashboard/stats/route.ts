@@ -1,8 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/app/api/auth/[...nextauth]/route'
 import { prisma } from '@/lib/prisma'
 
 export async function GET(request: NextRequest) {
     try {
+        // Check authentication
+        const session = await getServerSession(authOptions)
+        if (!session?.user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        }
+
+        const userId = session.user.id
+        const userRole = session.user.role
+
+        // Check for sample data toggle
+        const { searchParams } = new URL(request.url)
+        const showSampleData = searchParams.get('sampleData') === 'true'
+
         const today = new Date()
         today.setHours(0, 0, 0, 0)
 
@@ -12,14 +27,18 @@ export async function GET(request: NextRequest) {
         const thisMonthStart = new Date(today.getFullYear(), today.getMonth(), 1)
         const nextMonthStart = new Date(today.getFullYear(), today.getMonth() + 1, 1)
 
+        // Role-based filter for payments
+        const paymentFilter = userRole === 'ADMIN' ? {} : { collectedById: userId }
+
         // Total active students
         const totalActiveStudents = await prisma.admission.count({
             where: { status: 'ACTIVE' }
         })
 
-        // Today's collection
+        // Today's collection (user-specific for non-admin)
         const todayCollection = await prisma.payment.aggregate({
             where: {
+                ...paymentFilter,
                 paymentDate: {
                     gte: today,
                     lt: tomorrow
@@ -30,9 +49,10 @@ export async function GET(request: NextRequest) {
             }
         })
 
-        // This month's collection
+        // This month's collection (user-specific for non-admin)
         const thisMonthCollection = await prisma.payment.aggregate({
             where: {
+                ...paymentFilter,
                 paymentDate: {
                     gte: thisMonthStart,
                     lt: nextMonthStart
@@ -65,7 +85,8 @@ export async function GET(request: NextRequest) {
             include: {
                 admission: {
                     include: {
-                        student: true
+                        student: true,
+                        course: true
                     }
                 }
             }
@@ -85,9 +106,10 @@ export async function GET(request: NextRequest) {
             }
         })
 
-        // Today's collections list
+        // Today's collections list (user-specific for non-admin)
         const todayPayments = await prisma.payment.findMany({
             where: {
+                ...paymentFilter,
                 paymentDate: {
                     gte: today,
                     lt: tomorrow
@@ -138,7 +160,7 @@ export async function GET(request: NextRequest) {
             .slice(0, 10)
             .map(inst => ({
                 student: inst.admission.student.name,
-                course: inst.admission.course,
+                course: inst.admission.course.name,
                 pending: inst.amount - inst.paidAmount,
                 daysOverdue: Math.floor((today.getTime() - inst.dueDate.getTime()) / (1000 * 60 * 60 * 24))
             }))
@@ -168,7 +190,9 @@ export async function GET(request: NextRequest) {
                 amount: inst.amount - inst.paidAmount,
                 mobile: inst.admission.student.mobile
             })),
-            topDefaulters
+            topDefaulters,
+            showSampleData,
+            userRole
         })
     } catch (error) {
         console.error('Error fetching dashboard stats:', error)
